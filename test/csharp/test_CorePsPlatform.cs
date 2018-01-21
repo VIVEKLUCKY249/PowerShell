@@ -4,9 +4,8 @@ using System.IO;
 using System.Diagnostics;
 using System.Management.Automation;
 
-namespace PSTests
+namespace PSTests.Parallel
 {
-    [Collection("AssemblyLoadContext")]
     public static class PlatformTests
     {
         [Fact]
@@ -15,6 +14,7 @@ namespace PSTests
             Assert.True(Platform.IsCoreCLR);
         }
 
+#if Unix
         [Fact]
         public static void TestGetUserName()
         {
@@ -38,7 +38,7 @@ namespace PSTests
             }
         }
 
-        [Fact(Skip="Bad arguments for macOS")]
+        [Fact]
         public static void TestGetMachineName()
         {
             var startInfo = new ProcessStartInfo
@@ -61,7 +61,7 @@ namespace PSTests
             }
         }
 
-        [Fact(Skip="Bad arguments for macOS")]
+        [Fact]
         public static void TestGetFQDN()
         {
             var startInfo = new ProcessStartInfo
@@ -84,7 +84,7 @@ namespace PSTests
             }
         }
 
-        [Fact(Skip="Bad arguments for macOS")]
+        [Fact]
         public static void TestGetDomainName()
         {
             var startInfo = new ProcessStartInfo
@@ -255,5 +255,6 @@ namespace PSTests
             File.Delete(path);
             File.Delete(link);
         }
+#endif
     }
 }

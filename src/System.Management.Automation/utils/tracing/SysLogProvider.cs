@@ -88,7 +88,7 @@ namespace System.Management.Automation.Tracing
         /// Initializes a new instance of this class.
         /// </summary>
         /// <param name="applicationId">The log identity name used to identify the application in syslog.</param>
-        /// <param name="level">The trace lavel to enable.</param>
+        /// <param name="level">The trace level to enable.</param>
         /// <param name="keywords">The keywords to enable.</param>
         /// <param name="channels">The output channels to enable.</param>
         public SysLogProvider(string applicationId, PSLevel level, PSKeyword keywords, PSChannel channels)
@@ -313,6 +313,13 @@ namespace System.Management.Automation.Tracing
         /// <param name="args">The payload for the log message.</param>
         public void Log(PSEventId eventId, PSChannel channel, PSTask task, PSOpcode opcode, PSLevel level, PSKeyword keyword, params object[] args)
         {
+            if (keyword == PSKeyword.UseAlwaysAnalytic)
+            {
+                // Use the 'DefaultKeywords' to work around the default keyword filter.
+                // Note that the PSKeyword argument is not really used in writing SysLog.
+                keyword = PSSysLogProvider.DefaultKeywords;
+            }
+
             if (ShouldLog(level, keyword, channel))
             {
                 int threadId = Thread.CurrentThread.ManagedThreadId;
@@ -357,6 +364,7 @@ namespace System.Management.Automation.Tracing
 
     internal static class NativeMethods
     {
+        const string libpslnative = "libpsl-native";
         /// <summary>
         /// Write a message to the system logger, which in turn writes the message to the system console, log files, etc.
         /// See man 3 syslog for more info.
@@ -365,13 +373,13 @@ namespace System.Management.Automation.Tracing
         /// The OR of a priority and facility in the SysLogPriority enum indicating the the priority and facility of the log entry.
         /// </param>
         /// <param name="message">The message to put in the log entry.</param>
-        [DllImport("psl-native", CharSet = CharSet.Ansi, EntryPoint = "Native_SysLog")]
+        [DllImport(libpslnative, CharSet = CharSet.Ansi, EntryPoint = "Native_SysLog")]
         internal static extern void SysLog(SysLogPriority priority, string message);
 
-        [DllImport("psl-native", CharSet = CharSet.Ansi, EntryPoint = "Native_OpenLog")]
+        [DllImport(libpslnative, CharSet = CharSet.Ansi, EntryPoint = "Native_OpenLog")]
         internal static extern void OpenLog(IntPtr ident, SysLogPriority facility);
 
-        [DllImport("psl-native", EntryPoint = "Native_CloseLog")]
+        [DllImport(libpslnative, EntryPoint = "Native_CloseLog")]
         internal static extern void CloseLog();
 
         [Flags]

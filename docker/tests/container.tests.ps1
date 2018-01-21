@@ -57,8 +57,7 @@ Describe "Linux Containers run PowerShell" -Tags 'Behavior', 'Linux' {
         # prune unused volumes
         $null=Invoke-Docker -Command 'volume', 'prune' -Params '--force' -SuppressHostOutput
     }
-    BeforeEach
-    {
+    BeforeEach {
         Remove-Item $testContext.resolvedXmlPath -ErrorAction SilentlyContinue
         Remove-Item $testContext.resolvedLogPath -ErrorAction SilentlyContinue
     }
@@ -74,7 +73,7 @@ Describe "Linux Containers run PowerShell" -Tags 'Behavior', 'Linux' {
             $path
         )
 
-        Get-ContainerPowerShellVersion -TestContext $testContext -Name $Name -RepoName (Get-RepoName)  | should be '6.0.0-rc'
+        Get-ContainerPowerShellVersion -TestContext $testContext -Name $Name -RepoName (Get-RepoName)  | should be '6.0.0'
     }
 }
 
@@ -82,8 +81,7 @@ Describe "Windows Containers run PowerShell" -Tags 'Behavior', 'Windows' {
     BeforeAll{
         $testContext = Get-TestContext -type Windows
     }
-    BeforeEach
-    {
+    BeforeEach {
         Remove-Item $testContext.resolvedXmlPath -ErrorAction SilentlyContinue
         Remove-Item $testContext.resolvedLogPath -ErrorAction SilentlyContinue
     }
@@ -99,6 +97,6 @@ Describe "Windows Containers run PowerShell" -Tags 'Behavior', 'Windows' {
             $path
         )
 
-        Get-ContainerPowerShellVersion -TestContext $testContext -Name $Name -RepoName (Get-RepoName)  | should be '6.0.0-rc'
+        Get-ContainerPowerShellVersion -TestContext $testContext -Name $Name -RepoName (Get-RepoName)  | should be '6.0.0'
     }
 }

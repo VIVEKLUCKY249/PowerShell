@@ -195,7 +195,7 @@ elseif($Stage -eq 'Build')
     $ProgressPreference = 'SilentlyContinue'
     try {
         ## We use CrossGen build to run tests only if it's the daily build.
-        Start-PSBuild -CrossGen -PSModuleRestore -ReleaseTag $releaseTag
+        Start-PSBuild -CrossGen -PSModuleRestore -CI -ReleaseTag $releaseTag
     }
     finally{
         $ProgressPreference = $originalProgressPreference
@@ -240,7 +240,12 @@ elseif($Stage -eq 'Build')
     }
 
     try {
-        Start-PSxUnit
+        $SequentialXUnitTestResultsFile = "$pwd/SequentialXUnitTestResults.xml"
+        $ParallelXUnitTestResultsFile = "$pwd/ParallelXUnitTestResults.xml"
+
+        Start-PSxUnit -SequentialTestResultsFile $SequentialXUnitTestResultsFile -ParallelTestResultsFile $ParallelXUnitTestResultsFile
+        # If there are failures, Test-XUnitTestResults throws
+        $SequentialXUnitTestResultsFile, $ParallelXUnitTestResultsFile | ForEach-Object { Test-XUnitTestResults -TestResultsFile $_ }
     }
     catch {
         $result = "FAIL"
@@ -274,7 +279,7 @@ elseif($Stage -eq 'Build')
         if ($IsLinux)
         {
             # Create and package Raspbian .tgz
-            Start-PSBuild -Clean -Runtime linux-arm
+            Start-PSBuild -PSModuleRestore -Clean -Runtime linux-arm
             Start-PSPackage @packageParams -Type tar-arm -SkipReleaseChecks
         }
     }

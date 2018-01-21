@@ -10,6 +10,7 @@ using System.Globalization;
 using System.IO;
 using System.Collections.ObjectModel;
 using System.Management.Automation;
+using System.Management.Automation.Configuration;
 using System.Management.Automation.Runspaces;
 using System.Management.Automation.Internal;
 using System.Diagnostics;
@@ -394,6 +395,10 @@ namespace Microsoft.PowerShell
             Dbg.Assert(_helpText != null, "_helpText should not be null");
             _hostUI.WriteLine("");
             _hostUI.Write(_helpText);
+            if (_showExtendedHelp)
+            {
+                _hostUI.Write(ManagedEntranceStrings.ExtendedHelp);
+            }
             _hostUI.WriteLine("");
         }
 
@@ -459,29 +464,17 @@ namespace Microsoft.PowerShell
             }
         }
 
-        private static string s_groupPolicyBase = @"Software\Policies\Microsoft\Windows\PowerShell";
-        private static string s_consoleSessionConfigurationKey = "ConsoleSessionConfiguration";
-        private static string s_enableConsoleSessionConfiguration = "EnableConsoleSessionConfiguration";
-        private static string s_consoleSessionConfigurationName = "ConsoleSessionConfigurationName";
         private static string GetConfigurationNameFromGroupPolicy()
         {
             // Current user policy takes precedence.
-            var groupPolicySettings = Utils.GetGroupPolicySetting(s_groupPolicyBase, s_consoleSessionConfigurationKey, Utils.RegCurrentUserThenLocalMachine);
-            if (groupPolicySettings != null)
+            var consoleSessionSetting = Utils.GetPolicySetting<ConsoleSessionConfiguration>(Utils.CurrentUserThenSystemWideConfig);
+            if (consoleSessionSetting != null)
             {
-                object keyValue;
-                if (groupPolicySettings.TryGetValue(s_enableConsoleSessionConfiguration, out keyValue))
+                if (consoleSessionSetting.EnableConsoleSessionConfiguration == true)
                 {
-                    if (String.Equals(keyValue.ToString(), "1", StringComparison.OrdinalIgnoreCase))
+                    if (!string.IsNullOrEmpty(consoleSessionSetting.ConsoleSessionConfigurationName))
                     {
-                        if (groupPolicySettings.TryGetValue(s_consoleSessionConfigurationName, out keyValue))
-                        {
-                            string consoleSessionConfigurationName = keyValue.ToString();
-                            if (!string.IsNullOrEmpty(consoleSessionConfigurationName))
-                            {
-                                return consoleSessionConfigurationName;
-                            }
-                        }
+                        return consoleSessionSetting.ConsoleSessionConfigurationName;
                     }
                 }
             }
@@ -536,6 +529,7 @@ namespace Microsoft.PowerShell
                 else if (MatchSwitch(switchKey, "help", "h") || MatchSwitch(switchKey, "?", "?"))
                 {
                     _showHelp = true;
+                    _showExtendedHelp = true;
                     _abortStartup = true;
                 }
                 else if (MatchSwitch(switchKey, "noexit", "noe"))
@@ -955,7 +949,7 @@ namespace Microsoft.PowerShell
                     }
                     WriteCommandLineError(
                         string.Format(CultureInfo.CurrentCulture, CommandLineParameterParserStrings.ArgumentFileDoesNotExist, args[i]),
-                        showBanner: false);
+                        showHelp: true);
                     return false;
                 }
 
@@ -1164,6 +1158,7 @@ namespace Microsoft.PowerShell
         private string _configurationName;
         private PSHostUserInterface _hostUI;
         private bool _showHelp;
+        private bool _showExtendedHelp;
         private bool _showBanner = true;
         private bool _noInteractive;
         private string _bannerText;
